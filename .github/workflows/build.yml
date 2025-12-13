@@ -74,9 +74,7 @@ jobs:
     - name: Compile firmware
       run: |
         cd ImmortalWrt
-        # 第一次尝试多核编译，提高效率
-        # 如果失败，自动转为单核编译并输出详细日志 (V=s)
-        make -j2 || make -j1 V=s
+        make -j1 V=s
 
     - name: Upload firmware
       uses: actions/upload-artifact@v4
