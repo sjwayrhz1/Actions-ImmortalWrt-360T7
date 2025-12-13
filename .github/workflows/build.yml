@@ -41,7 +41,7 @@ jobs:
 
     - name: Copy external .config
       run: |
-        cp .config ImmortalWrt/.config
+        cp ../../../.config ImmortalWrt/.config
         cd ImmortalWrt
         make defconfig
 
