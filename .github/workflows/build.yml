@@ -42,32 +42,47 @@ jobs:
     - name: Generate .config for 360T7 ubootmod
       run: |
         cd ImmortalWrt
-        echo "CONFIG_TARGET_mediatek=y" > .config
-        echo "CONFIG_TARGET_mediatek_mt7981=y" >> .config
-        echo "CONFIG_TARGET_mediatek_mt7981_DEVICE_qihoo_360t7-ubootmod=y" >> .config
-        echo 'CONFIG_TARGET_PROFILE="qihoo_360t7-ubootmod"' >> .config
-        echo "CONFIG_PACKAGE_luci=y" >> .config
-        echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
-        # 可选禁用不稳定 i18n 包
-        # echo "CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=n" >> .config
-        # echo "CONFIG_PACKAGE_luci-i18n-opkg-zh-cn=n" >> .config
+        # 基础硬件设置
+        cat > .config <<EOF
+        CONFIG_TARGET_mediatek=y
+        CONFIG_TARGET_mediatek_mt7981=y
+        CONFIG_TARGET_mediatek_mt7981_DEVICE_qihoo_360t7-ubootmod=y
+        CONFIG_TARGET_PROFILE="qihoo_360t7-ubootmod"
+        
+        # 显式处理 dnsmasq 冲突 (Error 2 的常见原因)
+        # CONFIG_PACKAGE_dnsmasq is not set
+        CONFIG_PACKAGE_dnsmasq-full=y
+        
+        # 基础组件与中文支持
+        CONFIG_PACKAGE_luci=y
+        CONFIG_PACKAGE_luci-ssl=y
+        CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+        CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
+        CONFIG_PACKAGE_luci-i18n-opkg-zh-cn=y
+        EOF
+        
+        # 补全依赖并应用配置
         make defconfig
 
     - name: Ensure all packages are downloaded
       run: |
         cd ImmortalWrt
         make download -j8 || make download V=s
-        # 删除可能下载不完整的小文件
+        # 删除下载失败的小文件
         find dl -size -1024c -exec rm -f {} \;
 
     - name: Compile firmware
       run: |
         cd ImmortalWrt
-        # 降低并行数防止内存不足
+        # 第一次尝试多核编译，提高效率
+        # 如果失败，自动转为单核编译并输出详细日志 (V=s)
         make -j2 || make -j1 V=s
 
     - name: Upload firmware
       uses: actions/upload-artifact@v4
       with:
         name: ImmortalWrt_360T7_21.02_ubootmod
-        path: ImmortalWrt/bin/targets/mediatek/mt7981/*.bin
+        path: |
+          ImmortalWrt/bin/targets/mediatek/mt7981/*.bin
+          ImmortalWrt/bin/targets/mediatek/mt7981/*.buildinfo
+          ImmortalWrt/bin/targets/mediatek/mt7981/config.buildinfo
