@@ -42,7 +42,7 @@ jobs:
     - name: Generate .config for 360T7 ubootmod
       run: |
         cd ImmortalWrt
-        cat > .config <<'EOF'
+        cat > .config << 'EOF'
 CONFIG_TARGET_mediatek=y
 CONFIG_TARGET_mediatek_mt7981=y
 CONFIG_TARGET_mediatek_mt7981_DEVICE_qihoo_360t7-ubootmod=y
